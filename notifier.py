@@ -15,56 +15,28 @@ logger = logging.getLogger(__name__)
 
 def create_odoo_activity(client, product_id, product_name):
     try:
-        lista_usuarios_id = [18390]
+        MODEL_ID = 208
+        ACTIVITY_TYPE_ID = 124
 
-        # Obtener tipo de actividad (el primero disponible)
-        activity_types = client._execute(
-            'mail.activity.type',
-            'search_read',
-            [[]],
-            {'fields': ['id'], 'limit': 1}
+        activity_vals = {
+            'res_id': product_id,
+            'res_model_id': MODEL_ID,
+            'activity_type_id': ACTIVITY_TYPE_ID,
+            'summary': f'Revisar nuevo producto: {product_name}',
+            'note': '<p>Detección automática de nuevo ingreso.</p>',
+            'date_deadline': datetime.now().strftime('%Y-%m-%d'),
+            'user_id': client.uid,
+        }
+
+        client._execute(
+            'mail.activity',
+            'create',
+            [activity_vals]
         )
 
-        if not activity_types:
-            logger.error("No existen tipos de actividad en Odoo.")
-            return
+        logger.info("   -> ✅ Actividad creada correctamente.")
 
-        type_id = activity_types[0]['id']
-
-        # Obtener ID del modelo dinámicamente
-        model_data = client._execute(
-            'ir.model',
-            'search_read',
-            [[['model', '=', 'product.template']]],
-            {'fields': ['id'], 'limit': 1}
-        )
-
-        if not model_data:
-            logger.error("No se encontró modelo product.template.")
-            return
-
-        model_id = model_data[0]['id']
-
-        for u_id in lista_usuarios_id:
-            activity_vals = {
-                'res_id': product_id,
-                'res_model_id': model_id,
-                'activity_type_id': type_id,
-                'summary': f'Revisar nuevo producto: {product_name}',
-                'note': '<p>Detección automática de nuevo ingreso.</p>',
-                'date_deadline': datetime.now().strftime('%Y-%m-%d'),
-                'user_id': u_id,
-            }
-
-            client._execute(
-                'mail.activity',
-                'create',
-                [activity_vals]
-            )
-
-        logger.info("   -> ✅ Actividades creadas correctamente.")
-
-    except Exception as e:
+    except Exception:
         logger.exception("   -> ❌ Error creando actividad:")
 
 # ==========================================================
