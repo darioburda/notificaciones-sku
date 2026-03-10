@@ -14,21 +14,8 @@ logger = logging.getLogger(__name__)
 
 def create_odoo_activity(client, product_id, product_name):
     try:
-        MODEL_ID = 208  # product.template (verificado en Odoo)
-
-        # Buscar tipo de actividad correcto
-        activity_type = client._execute(
-            'mail.activity.type',
-            'search_read',
-            [[['name', '=', 'Producto Nuevo Creado']]],
-            {'fields': ['id'], 'limit': 1}
-        )
-
-        if not activity_type:
-            logger.error("❌ No se encontró tipo 'Producto Nuevo Creado'.")
-            return
-
-        ACTIVITY_TYPE_ID = activity_type[0]['id']
+        MODEL_ID = 208           # product.template
+        ACTIVITY_TYPE_ID = 124   # Producto Nuevo Creado (verificado manualmente)
 
         activity_vals = {
             'res_id': product_id,
