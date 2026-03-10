@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 def create_odoo_activity(client, product_id, product_name):
     try:
-        lista_usuarios_id = [18484]
+        lista_usuarios_id = [18390]
 
         # Obtener tipo de actividad (el primero disponible)
         activity_types = client._execute(
