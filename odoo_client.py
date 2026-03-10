@@ -3,7 +3,6 @@ import logging
 import requests
 from dotenv import load_dotenv
 
-# Carga .env si existe (no afecta producción)
 load_dotenv()
 
 logger = logging.getLogger(__name__)
@@ -17,7 +16,6 @@ class OdooClient:
         self.password = os.getenv("ODOO_PASS")
 
         if not all([self.url, self.db, self.username, self.password]):
-            logger.error("❌ Variables Odoo faltantes.")
             raise Exception("Credenciales Odoo incompletas")
 
         self.uid = self._authenticate()
@@ -33,29 +31,23 @@ class OdooClient:
             "params": {
                 "service": service,
                 "method": method,
-                "args": args,
+                "args": list(args),   # 👈 CLAVE
             },
             "id": 1,
         }
 
-        try:
-            response = requests.post(
-                f"{self.url}/jsonrpc",
-                json=payload,
-                timeout=30
-            )
+        response = requests.post(
+            f"{self.url}/jsonrpc",
+            json=payload,
+            timeout=30
+        )
 
-            response.raise_for_status()
-            result = response.json()
+        result = response.json()
 
-            if "error" in result:
-                raise Exception(result["error"])
+        if "error" in result:
+            raise Exception(result["error"])
 
-            return result.get("result")
-
-        except Exception as e:
-            logger.error(f"❌ Error JSON-RPC: {e}")
-            raise
+        return result.get("result")
 
     # ==========================================================
     # AUTH
@@ -71,13 +63,13 @@ class OdooClient:
         )
 
         if not uid:
-            raise Exception("Autenticación fallida en Odoo.")
+            raise Exception("Autenticación fallida en Odoo")
 
         logger.info("✅ Autenticación Odoo exitosa.")
         return uid
 
     # ==========================================================
-    # EXECUTE GENERICO
+    # EXECUTE CORRECTO
     # ==========================================================
 
     def execute(self, model, method, *args, **kwargs):
@@ -89,8 +81,8 @@ class OdooClient:
             self.password,
             model,
             method,
-            args,
-            kwargs
+            list(args),           # 👈 args como lista
+            kwargs or {}          # 👈 kwargs como dict limpio
         )
 
     # ==========================================================
@@ -104,21 +96,19 @@ class OdooClient:
             return self.execute(
                 'product.template',
                 'search_read',
-                domain,
-                {
-                    'fields': [
-                        'id',
-                        'name',
-                        'default_code',
-                        'list_price',
-                        'qty_available',
-                        'categ_id',
-                        'type',
-                        'create_date'
-                    ],
-                    'order': 'id asc',
-                    'limit': 100
-                }
+                domain,                         # args
+                fields=[
+                    'id',
+                    'name',
+                    'default_code',
+                    'list_price',
+                    'qty_available',
+                    'categ_id',
+                    'type',
+                    'create_date'
+                ],
+                order='id asc',
+                limit=100
             )
         except Exception as e:
             logger.error(f"❌ Error consultando productos: {e}")
