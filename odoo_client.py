@@ -49,17 +49,22 @@ class OdooClient:
             return uid
 
         except Exception as e:
-            logger.error(f"Error conectando con Odoo: {e}")
+            logger.error(f"Error conectando con Odoo: {repr(e)}")
             raise
 
     def _execute(self, model, method, *args, **kwargs):
+        """
+        Wrapper limpio para execute_kw.
+        args → lista posicional
+        kwargs → diccionario de opciones
+        """
         return self.models.execute_kw(
             self.db,
             self.uid,
             self.password,
             model,
             method,
-            args,
+            list(args),
             kwargs
         )
 
@@ -75,22 +80,21 @@ class OdooClient:
             return self._execute(
                 'product.template',
                 'search_read',
-                [domain],
-                {
-                    'fields': [
-                        'id',
-                        'name',
-                        'default_code',
-                        'list_price',
-                        'qty_available',
-                        'categ_id',
-                        'type',
-                        'create_date'
-                    ],
-                    'order': 'id asc',
-                    'limit': 100
-                }
+                domain,
+                fields=[
+                    'id',
+                    'name',
+                    'default_code',
+                    'list_price',
+                    'qty_available',
+                    'categ_id',
+                    'type',
+                    'create_date'
+                ],
+                order='id asc',
+                limit=100
             )
+
         except Exception as e:
             logger.error(f"Error consultando productos: {repr(e)}")
             return []
